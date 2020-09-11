@@ -1,26 +1,33 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.less';
+import React from "react";
+import Tree, { TreeNode } from "./components/Tree";
+// import "./components/Tree/index.less";
+import "./App.less";
 
-function App() {
+function handleSelect(selected, c) {
+  console.log(selected, c);
+}
+
+export default function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h2>简单tree</h2>
+      <Tree className="myCls" onSelect={handleSelect} checkable={true}>
+        <TreeNode title="parent 1" expanded={false}>
+          <TreeNode>leaf </TreeNode>
+          <TreeNode title="parent 1-1">
+            <TreeNode title="parent 2-1">
+              <TreeNode>leaf </TreeNode>
+              <TreeNode>leaf </TreeNode>
+            </TreeNode>
+            <TreeNode>leaf </TreeNode>
+            <TreeNode>leaf </TreeNode>
+          </TreeNode>
+        </TreeNode>
+        <TreeNode>leaf </TreeNode>
+        <TreeNode>
+          <TreeNode>leaf </TreeNode>
+        </TreeNode>
+      </Tree>
     </div>
   );
 }
-
-export default App;
