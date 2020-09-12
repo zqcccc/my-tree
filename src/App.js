@@ -6,6 +6,9 @@ import "./App.less";
 function handleSelect(selected, c) {
   console.log(selected, c);
 }
+function handleChecked(checked, c) {
+  console.log("from App checked handle: ", checked, c);
+}
 
 export default function App() {
   return (
@@ -25,19 +28,22 @@ export default function App() {
       <Tree
         className="myCls"
         onSelect={handleSelect}
+        onChecked={handleChecked}
         checkable={true}
         showLine={false}
-        expandAll={true}
+        expandAll={false}
       >
-        <TreeNode title="parent 1">
+        <TreeNode title="parent 1" expanded={true}>
           <TreeNode>leaf </TreeNode>
-          <TreeNode title="parent 1-1">
+          <TreeNode title="parent 1-1" expanded={true} defaultExpanded={false}>
             <TreeNode title="parent 2-1">
               <TreeNode>leaf </TreeNode>
               <TreeNode>leaf </TreeNode>
             </TreeNode>
             <TreeNode>leaf </TreeNode>
-            <TreeNode>leaf </TreeNode>
+            <TreeNode>
+              <TreeNode>leaf </TreeNode>
+            </TreeNode>
           </TreeNode>
         </TreeNode>
         <TreeNode>leaf </TreeNode>

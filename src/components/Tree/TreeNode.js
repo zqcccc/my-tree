@@ -19,10 +19,7 @@ export default class TreeNode extends Component {
     this.selectHandle = createRef();
   }
   componentDidMount() {
-    //console.log( this.newChildren );
-    // if (this.newChildren) {
-    //   Tree.trees.push(this);
-    // }
+    this.componentDidUpdate();
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -75,6 +72,7 @@ export default class TreeNode extends Component {
 
   handleChecked = () => {
     var _pos = this.props._pos;
+    console.log(`************** 当前check的节点位置_pos: ${_pos} *************`);
     var checked = !this.state.checked;
     if (this.state.checkPart) {
       checked = false;
@@ -86,37 +84,42 @@ export default class TreeNode extends Component {
     };
     this.setState(nSt);
 
-    var sortedTree = Tree.trees.sort(function (a, b) {
+    var sortedTree = Tree.trees.sort(function (a, b) { // 排序保证从最深的有子树的节点开始遍历
       return b.props._pos.length - a.props._pos.length;
     });
     // console.log(sortedTree)
     sortedTree.forEach(function (c) {
       var cPos = c.props._pos;
-      if (_pos.indexOf(cPos) === 0 && _pos !== cPos) {
+      console.log('--------------排序后的 tree 操作中的 cPos: ', cPos);
+      if (_pos.indexOf(cPos) === 0 && _pos !== cPos) { // 父节点才进的来
+        console.log('--------------该 tree 属于所 check 节点的父节点或者祖先节点, cPos: ', cPos);
         var childArr = toArray(c.props.children),
           len = childArr.length;
 
         var checkedNumbers = 0;
 
-        console.log("len: ", len);
+        console.log("该 tree children 数组 length: ", len);
+        console.log(`开始计算上一状态下的${cPos}所有子节点的checkedNumbers`)
         //先计算已经选中的节点数
         for (var i = 0; i < len; i++) {
           var checkSt = Tree.treeNodesState[cPos + "-" + i];
-          console.log(cPos + "-" + i, " : ", checkSt);
+          console.log('该 tree 子节点', cPos + "-" + i, "的状态: ", checkSt);
           if (checkSt.checked) {
             checkedNumbers++;
           } else if (checkSt.checkPart) {
             checkedNumbers += 0.5;
           }
         }
-        console.log("已选中节点 checkedNumbers", checkedNumbers);
+        console.log("该 tree 所有子节点 checkedNumbers", checkedNumbers);
         //点击节点的 直接父级
         if (_pos.length - cPos.length <= 2) {
           //如果原来是半选
-          console.log("Tree.treeNodesState[_pos]:", Tree.treeNodesState[_pos]);
+          console.log("该 tree 是直接父级，位置：", cPos);
+          console.log("所点击check节点上一个的状态", Tree.treeNodesState[_pos]);
+          console.log(`所点击check节点即将变成的状态checked: ${checked}`)
           if (Tree.treeNodesState[_pos].checkPart) {
             // checked ? checkedNumbers += 0.5 : checkedNumbers -= 0.5;
-            if (checked) {
+            if (checked) { // 这个分支情况不会发生，因为最前面的判断的当前节点 checkPart 是 true 时，checked 无论是什么值就会变成 false
               checkedNumbers += 0.5;
             } else {
               checkedNumbers -= 0.5;
@@ -127,7 +130,7 @@ export default class TreeNode extends Component {
             checkedNumbers--;
           }
         }
-        console.log("父节点 checkedNumbers", checkedNumbers);
+        console.log("最后 该 tree checkedNumbers", checkedNumbers);
         var newSt;
         if (checkedNumbers <= 0) {
           //都不选
@@ -149,13 +152,16 @@ export default class TreeNode extends Component {
           };
         }
         c.setState(newSt);
+        console.log('最后 该 tree 设置的新状态newSt: ', newSt);
         Tree.treeNodesState[cPos] = newSt;
       }
     });
 
     Tree.treeNodesState[_pos] = nSt;
+    console.log('全部祖先树节点更新完成，所check的节点更新状态到Tree.treeNodesState的 nSt: ', nSt);
 
     if (this.props.onChecked) {
+      console.log('接下来是来自自定义的 onChecked handle: ');
       this.props.onChecked(checked, this);
     }
   };
@@ -169,6 +175,7 @@ export default class TreeNode extends Component {
           Tree.trees.splice(i--, 1);
         }
       }
+      console.log('清除前一个相同实例（如果有的话），再推入新实例;', `位置为${this.props._pos}`, this)
       Tree.trees.push(this);
     }
 
