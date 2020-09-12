@@ -4,17 +4,17 @@ import Tree, { TreeNode } from "./components/Tree";
 import "./App.less";
 
 function handleSelect(selected, c) {
-  console.log(selected, c);
+  console.log("from App select handle: ", selected, c);
 }
 function handleChecked(checked, c) {
-  console.log("from App checked handle: ", checked, c);
+  console.log("from App check handle: ", checked, c);
 }
 
 export default function App() {
   return (
     <div className="App">
       <h2>simple</h2>
-      <Tree onSelect={handleSelect}>
+      <Tree onSelect={handleSelect} expandAll={true} showIcon={false}>
         <TreeNode title="parent 1">
           <TreeNode>leaf </TreeNode>
           <TreeNode title="parent 1-1">

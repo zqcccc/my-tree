@@ -34,9 +34,9 @@ export default class Tree extends Component {
   };
 
   renderTreeNode = (child, index) => {
-    var props = this.props;
-    var pos = (props._pos || 0) + "-" + index;
-    var cloneProps = {
+    const props = this.props;
+    const pos = (props._pos || 0) + "-" + index;
+    const cloneProps = {
       ref: "treeNode",
       _level: props._level || 0,
       _pos: pos,
@@ -45,6 +45,7 @@ export default class Tree extends Component {
       _len: this.childrenLength,
       prefixCls: props.prefixCls,
       showLine: props.showLine,
+      showIcon: props.showIcon,
       checkable: props.checkable,
       _checked: props._checked,
       _checkPart: props._checkPart,
@@ -56,9 +57,9 @@ export default class Tree extends Component {
   };
 
   render() {
-    var props = this.props;
+    const props = this.props;
 
-    var domProps = {
+    const domProps = {
       className: classNames(props.className, props.prefixCls),
       onKeyDown: this.handleKeyDown,
       role: "tree-node",
@@ -87,6 +88,7 @@ export default class Tree extends Component {
 Tree.defaultProps = {
   prefixCls: "rc-tree",
   checkable: false,
+  showIcon: true,
   showLine: true,
   expandAll: false,
 };

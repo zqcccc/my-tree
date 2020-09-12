@@ -30,10 +30,10 @@ export default class TreeNode extends Component {
     });
   }
   shouldComponentUpdate(nextProps, nextState) {
-    var checkbox = this.checkbox.current;
+    const checkbox = this.checkbox.current;
     if (checkbox) {
-      var cls = checkbox.className;
-      var checkSt = Tree.treeNodesState[this.props._pos] || {};
+      const cls = checkbox.className;
+      const checkSt = Tree.treeNodesState[this.props._pos] || {};
       checkSt.checkPart = nextState.checkPart;
       checkSt.checked = nextState.checked;
       if (nextState.checkPart) {
@@ -71,39 +71,46 @@ export default class TreeNode extends Component {
   };
 
   handleChecked = () => {
-    var _pos = this.props._pos;
-    console.log(`************** 当前check的节点位置_pos: ${_pos} *************`);
-    var checked = !this.state.checked;
+    const _pos = this.props._pos;
+    console.log(
+      `************** 当前check的节点位置_pos: ${_pos} *************`
+    );
+    let checked = !this.state.checked;
     if (this.state.checkPart) {
       checked = false;
     }
 
-    var nSt = {
+    const nSt = {
       checkPart: false,
       checked: checked,
     };
     this.setState(nSt);
 
-    var sortedTree = Tree.trees.sort(function (a, b) { // 排序保证从最深的有子树的节点开始遍历
+    const sortedTree = Tree.trees.sort(function (a, b) {
+      // 排序保证从最深的有子树的节点开始遍历
       return b.props._pos.length - a.props._pos.length;
     });
     // console.log(sortedTree)
     sortedTree.forEach(function (c) {
-      var cPos = c.props._pos;
-      console.log('--------------排序后的 tree 操作中的 cPos: ', cPos);
-      if (_pos.indexOf(cPos) === 0 && _pos !== cPos) { // 父节点才进的来
-        console.log('--------------该 tree 属于所 check 节点的父节点或者祖先节点, cPos: ', cPos);
-        var childArr = toArray(c.props.children),
+      const cPos = c.props._pos;
+      console.log("--------------排序后的 tree 操作中的 cPos: ", cPos);
+      if (_pos.indexOf(cPos) === 0 && _pos !== cPos) {
+        // 父节点才进的来
+        console.log(
+          "--------------该 tree 属于所 check 节点的父节点或者祖先节点, cPos: ",
+          cPos
+        );
+        const childArr = toArray(c.props.children),
           len = childArr.length;
 
-        var checkedNumbers = 0;
+        let checkedNumbers = 0;
 
         console.log("该 tree children 数组 length: ", len);
-        console.log(`开始计算上一状态下的${cPos}所有子节点的checkedNumbers`)
+        console.log(`开始计算上一状态下的${cPos}所有子节点的checkedNumbers`);
         //先计算已经选中的节点数
-        for (var i = 0; i < len; i++) {
-          var checkSt = Tree.treeNodesState[cPos + "-" + i];
-          console.log('该 tree 子节点', cPos + "-" + i, "的状态: ", checkSt);
+        for (let i = 0; i < len; i++) {
+          const checkSt = Tree.treeNodesState[cPos + "-" + i];
+          console.log("该 tree 子节点", cPos + "-" + i, "的状态: ", checkSt);
           if (checkSt.checked) {
             checkedNumbers++;
           } else if (checkSt.checkPart) {
@@ -116,10 +123,11 @@ export default class TreeNode extends Component {
           //如果原来是半选
           console.log("该 tree 是直接父级，位置：", cPos);
           console.log("所点击check节点上一个的状态", Tree.treeNodesState[_pos]);
-          console.log(`所点击check节点即将变成的状态checked: ${checked}`)
+          console.log(`所点击check节点即将变成的状态checked: ${checked}`);
           if (Tree.treeNodesState[_pos].checkPart) {
             // checked ? checkedNumbers += 0.5 : checkedNumbers -= 0.5;
-            if (checked) { // 这个分支情况不会发生，因为最前面的判断的当前节点 checkPart 是 true 时，checked 无论是什么值就会变成 false
+            if (checked) {
+              // 这个分支情况不会发生，因为最前面的判断的当前节点 checkPart 是 true 时，checked 无论是什么值就会变成 false
               checkedNumbers += 0.5;
             } else {
               checkedNumbers -= 0.5;
@@ -131,7 +139,7 @@ export default class TreeNode extends Component {
           }
         }
         console.log("最后 该 tree checkedNumbers", checkedNumbers);
-        var newSt;
+        let newSt;
         if (checkedNumbers <= 0) {
           //都不选
           newSt = {
@@ -152,16 +160,19 @@ export default class TreeNode extends Component {
           };
         }
         c.setState(newSt);
-        console.log('最后 该 tree 设置的新状态newSt: ', newSt);
+        console.log("最后 该 tree 设置的新状态newSt: ", newSt);
         Tree.treeNodesState[cPos] = newSt;
       }
     });
 
     Tree.treeNodesState[_pos] = nSt;
-    console.log('全部祖先树节点更新完成，所check的节点更新状态到Tree.treeNodesState的 nSt: ', nSt);
+    console.log(
+      "全部祖先树节点更新完成，所check的节点更新状态到Tree.treeNodesState的 nSt: ",
+      nSt
+    );
 
     if (this.props.onChecked) {
-      console.log('接下来是来自自定义的 onChecked handle: ');
+      console.log("接下来是来自自定义的 onChecked handle: ");
       this.props.onChecked(checked, this);
     }
   };
@@ -169,13 +180,18 @@ export default class TreeNode extends Component {
   componentDidUpdate() {
     //console.log( this.state.checked );
     if (this.newChildren) {
-      for (var i = 0; i < Tree.trees.length; i++) {
-        var obj = Tree.trees[i];
+      for (let i = 0; i < Tree.trees.length; i++) {
+        const obj = Tree.trees[i];
         if (obj.props._pos === this.props._pos) {
+          console.log(`数组第${i}个元素重复,树位置: ${this.props._pos}`);
           Tree.trees.splice(i--, 1);
+          console.log('删除')
         }
       }
-      console.log('清除前一个相同实例（如果有的话），再推入新实例;', `位置为${this.props._pos}`, this)
+      console.log(
+        `push 进 trees 新的位置为 ${this.props._pos} 的`,
+        this
+      );
       Tree.trees.push(this);
     }
 
@@ -184,10 +200,11 @@ export default class TreeNode extends Component {
       checked: this.state.checked,
       checkPart: this.state.checkPart,
     };
+    console.log(`Tree.treeNodesState[${this.props._pos}]: `, Tree.treeNodesState[this.props._pos]);
   }
 
   renderChildren(children) {
-    var newChildren = null;
+    let newChildren = null;
     if (
       children.type === TreeNode ||
       (Array.isArray(children) &&
@@ -195,17 +212,18 @@ export default class TreeNode extends Component {
           return item.type === TreeNode;
         }))
     ) {
-      var cls = {};
+      const cls = {};
       cls[this.props.prefixCls + "-child-tree"] = true;
       if (this.props.showLine && this.props._index !== this.props._len - 1) {
         cls.line = true;
       }
-      var treeProps = {
+      const treeProps = {
         _level: this.props._level + 1,
         _pos: this.props._pos,
         _isChildTree: true,
         className: classNames(cls),
         showLine: this.props.showLine,
+        showIcon: this.props.showIcon,
         expanded: this.state.expanded,
         expandAll: this.props.expandAll,
         //selected: this.state.checked,
@@ -224,13 +242,13 @@ export default class TreeNode extends Component {
     return newChildren;
   }
   render() {
-    var props = this.props;
-    var state = this.state;
+    const props = this.props;
+    const state = this.state;
 
-    var prefixCls = props.prefixCls;
-    var switchState = state.expanded ? "open" : "close";
+    const prefixCls = props.prefixCls;
+    const switchState = state.expanded ? "open" : "close";
 
-    var switcherCls = {};
+    const switcherCls = {};
     switcherCls.button = true;
     switcherCls[prefixCls + "-treenode-switcher"] = true;
     switcherCls[prefixCls + "-switcher__" + switchState] = true;
@@ -250,8 +268,8 @@ export default class TreeNode extends Component {
       switcherCls["center_" + switchState] = true;
     }
 
-    var checkbox = null;
-    var checkboxCls = {};
+    let checkbox = null;
+    const checkboxCls = {};
     if (props.checkable) {
       checkboxCls.button = true;
       checkboxCls.chk = true;
@@ -273,15 +291,16 @@ export default class TreeNode extends Component {
       );
     }
 
-    var iconEleCls = {
+    const iconEleCls = {
       button: true,
       [prefixCls + "-iconEle"]: true,
       [prefixCls + "-icon__" + switchState]: true,
     };
 
-    var content = props.title;
-    var newChildren = this.renderChildren(props.children);
+    let content = props.title;
+    let newChildren = this.renderChildren(props.children);
     if (newChildren === props.children) {
+      // 如果 children 不全部是 TreeNode，那 this.props.children 就会直接渲染成 content
       content = newChildren;
       newChildren = null;
     }
@@ -305,7 +324,9 @@ export default class TreeNode extends Component {
           className={state.selected ? prefixCls + "-selected" : ""}
           onClick={this.handleSelect}
         >
-          <span className={classNames(iconEleCls)}></span>
+          {props.showIcon ? (
+            <span className={classNames(iconEleCls)}></span>
+          ) : null}
           <span className="title">{content}</span>
         </a>
         {newChildren}
