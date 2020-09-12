@@ -10,9 +10,26 @@ function handleSelect(selected, c) {
 export default function App() {
   return (
     <div className="App">
-      <h2>简单tree</h2>
-      <Tree className="myCls" onSelect={handleSelect} checkable={true}>
-        <TreeNode title="parent 1" expanded={false}>
+      <h2>simple</h2>
+      <Tree onSelect={handleSelect}>
+        <TreeNode title="parent 1">
+          <TreeNode>leaf </TreeNode>
+          <TreeNode title="parent 1-1">
+            <TreeNode>leaf </TreeNode>
+            <TreeNode>leaf </TreeNode>
+          </TreeNode>
+        </TreeNode>
+      </Tree>
+
+      <h2>checkbox</h2>
+      <Tree
+        className="myCls"
+        onSelect={handleSelect}
+        checkable={true}
+        showLine={false}
+        expandAll={true}
+      >
+        <TreeNode title="parent 1">
           <TreeNode>leaf </TreeNode>
           <TreeNode title="parent 1-1">
             <TreeNode title="parent 2-1">

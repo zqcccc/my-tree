@@ -1,5 +1,5 @@
 import React, { Component, createRef } from "react";
-import { joinClasses, createChainedFunction } from "../../utils";
+// import { joinClasses, createChainedFunction } from "../../utils";
 import classNames from "classnames";
 import "./index.less";
 
@@ -30,6 +30,7 @@ export default class Tree extends Component {
   // todo
   handleKeyDown = (e) => {
     e.preventDefault();
+    console.log(e.KeyCode);
   };
 
   renderTreeNode = (child, index) => {
@@ -47,8 +48,9 @@ export default class Tree extends Component {
       checkable: props.checkable,
       _checked: props._checked,
       _checkPart: props._checkPart,
+      expandAll: props.expandAll,
       onChecked: this.handleChecked,
-      onSelect: this.handleSelect
+      onSelect: this.handleSelect,
     };
     return React.cloneElement(child, cloneProps);
   };
@@ -58,20 +60,18 @@ export default class Tree extends Component {
 
     var domProps = {
       className: classNames(props.className, props.prefixCls),
-      style: props.expanded ? { display: "block" } : { display: "none" },
+      onKeyDown: this.handleKeyDown,
       role: "tree-node",
       "aria-activedescendant": "",
       "aria-labelledby": "",
       "aria-expanded": props.expanded ? "true" : "false",
       "aria-selected": props.selected ? "true" : "false",
-      "aria-level": ""
+      "aria-level": "",
     };
-    if (props.id) {
-      domProps.id = props.id;
-    }
-    if (props.focusable) {
-      domProps.tabIndex = "0";
-      domProps.onKeyDown = this.handleKeyDown;
+    if (props._isChildTree) {
+      domProps.style = props.expanded
+        ? { display: "block" }
+        : { display: "none" };
     }
 
     this.childrenLength = React.Children.count(props.children);
@@ -86,6 +86,7 @@ export default class Tree extends Component {
 }
 Tree.defaultProps = {
   prefixCls: "rc-tree",
-  expanded: true,
-  showLine: true
+  checkable: false,
+  showLine: true,
+  expandAll: false,
 };

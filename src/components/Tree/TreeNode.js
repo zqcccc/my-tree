@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { Component, createRef } from "react";
 import { joinClasses, toArray } from "../../utils";
 import Tree from "./Tree";
@@ -9,10 +10,10 @@ export default class TreeNode extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      expanded: props.expanded,
+      expanded: props.expandAll || props.expanded || props.defaultExpanded,
       selected: props.selected || false,
       checkPart: props._checkPart || false,
-      checked: props._checked || false
+      checked: props._checked || false,
     };
     this.checkbox = createRef();
     this.selectHandle = createRef();
@@ -28,7 +29,7 @@ export default class TreeNode extends Component {
     this.setState({
       //selected: nextProps.selected,
       checkPart: nextProps._checkPart,
-      checked: nextProps._checked
+      checked: nextProps._checked,
     });
   }
   shouldComponentUpdate(nextProps, nextState) {
@@ -48,12 +49,12 @@ export default class TreeNode extends Component {
         checkbox.className = cls.replace(/checkbox_true_part/g, "");
       }
     }
-    return true; // 这里一直刷新没有问题吗
+    return true;
   }
   switchExpandedState = (newState, onStateChangeComplete) => {
     this.setState(
       {
-        expanded: newState
+        expanded: newState,
       },
       onStateChangeComplete
     );
@@ -65,7 +66,7 @@ export default class TreeNode extends Component {
 
   handleSelect = () => {
     this.setState({
-      selected: !this.state.selected
+      selected: !this.state.selected,
     });
     if (this.props.onSelect) {
       this.props.onSelect(!this.state.selected, this);
@@ -76,13 +77,12 @@ export default class TreeNode extends Component {
     var _pos = this.props._pos;
     var checked = !this.state.checked;
     if (this.state.checkPart) {
-      // return;
       checked = false;
     }
 
     var nSt = {
       checkPart: false,
-      checked: checked
+      checked: checked,
     };
     this.setState(nSt);
 
@@ -133,19 +133,19 @@ export default class TreeNode extends Component {
           //都不选
           newSt = {
             checkPart: false,
-            checked: false
+            checked: false,
           };
         } else if (checkedNumbers === len) {
           //全选
           newSt = {
             checkPart: false,
-            checked: true
+            checked: true,
           };
         } else {
           //部分选择
           newSt = {
             checkPart: true,
-            checked: false
+            checked: false,
           };
         }
         c.setState(newSt);
@@ -175,7 +175,7 @@ export default class TreeNode extends Component {
     //add treeNodes checked state
     Tree.treeNodesState[this.props._pos] = {
       checked: this.state.checked,
-      checkPart: this.state.checkPart
+      checkPart: this.state.checkPart,
     };
   }
 
@@ -198,13 +198,15 @@ export default class TreeNode extends Component {
         _pos: this.props._pos,
         _isChildTree: true,
         className: classNames(cls),
+        showLine: this.props.showLine,
         expanded: this.state.expanded,
+        expandAll: this.props.expandAll,
         //selected: this.state.checked,
         _checked: this.state.checked,
         _checkPart: this.state.checkPart,
         checkable: this.props.checkable, //只是为了传递根节点上的checkable设置,是否有更好做法?
         onChecked: this.props.onChecked,
-        onSelect: this.props.onSelect
+        onSelect: this.props.onSelect,
       };
       // newChildren = <Tree {...treeProps}>{children}</Tree>;
       newChildren = this.newChildren = <Tree {...treeProps}>{children}</Tree>;
@@ -225,7 +227,9 @@ export default class TreeNode extends Component {
     switcherCls.button = true;
     switcherCls[prefixCls + "-treenode-switcher"] = true;
     switcherCls[prefixCls + "-switcher__" + switchState] = true;
-    if (props._isChildTree && props._index === 0) {
+    if (!props.showLine) {
+      switcherCls["noline_" + switchState] = true;
+    } else if (props._isChildTree && props._index === 0) {
       if (props._len !== 1) {
         switcherCls["center_" + switchState] = true;
       } else {
@@ -262,15 +266,11 @@ export default class TreeNode extends Component {
       );
     }
 
-    var iconEleCls = {};
-    iconEleCls.button = true;
-    iconEleCls[prefixCls + "-iconEle"] = true;
-    iconEleCls[prefixCls + "-icon__" + switchState] = true;
-
-    var userIconEle = null;
-    if (props.iconEle && React.isValidElement(props.iconEle)) {
-      userIconEle = props.iconEle;
-    }
+    var iconEleCls = {
+      button: true,
+      [prefixCls + "-iconEle"]: true,
+      [prefixCls + "-icon__" + switchState]: true,
+    };
 
     var content = props.title;
     var newChildren = this.renderChildren(props.children);
@@ -280,9 +280,15 @@ export default class TreeNode extends Component {
     }
 
     return (
-      <li className={joinClasses("level" + props._level, "pos-" + props._pos)}>
+      <li
+        className={joinClasses(
+          props.className,
+          "level" + props._level,
+          "pos-" + props._pos
+        )}
+      >
         <span
-          className={joinClasses(props.className, classNames(switcherCls))}
+          className={classNames(switcherCls)}
           onClick={this.handleExpandedState}
         ></span>
         {checkbox}
@@ -292,8 +298,8 @@ export default class TreeNode extends Component {
           className={state.selected ? prefixCls + "-selected" : ""}
           onClick={this.handleSelect}
         >
-          <span className={classNames(iconEleCls)}>{userIconEle}</span>
-          <span>{content}</span>
+          <span className={classNames(iconEleCls)}></span>
+          <span className="title">{content}</span>
         </a>
         {newChildren}
       </li>
@@ -302,5 +308,6 @@ export default class TreeNode extends Component {
 }
 TreeNode.defaultProps = {
   title: "---",
-  expanded: true
+  defaultExpanded: false,
+  expanded: false,
 };
