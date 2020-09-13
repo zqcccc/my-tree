@@ -6,14 +6,19 @@ import classNames from "classnames";
 
 import "./index.less";
 
+const rootTrees = Tree.rootTrees;
 export default class TreeNode extends Component {
   constructor(props) {
     super(props);
+    const tnState =
+      rootTrees[this.props._rootTreeId].treeNodesState[this.props._pos] || {};
     this.state = {
       expanded: props.expandAll || props.expanded || props.defaultExpanded,
       selected: props.selected || false,
-      checkPart: props._checkPart || false,
-      checked: props._checked || false,
+      // checkPart: props.checkPart || false,
+      // checked: props.checked || false,
+      checkPart: tnState.checkPart || false,
+      checked: tnState.checked || false,
     };
     this.checkbox = createRef();
     this.selectHandle = createRef();
@@ -23,28 +28,30 @@ export default class TreeNode extends Component {
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
+    const tnState =
+      rootTrees[this.props._rootTreeId].treeNodesState[this.props._pos];
     this.setState({
-      //selected: nextProps.selected,
-      checkPart: nextProps._checkPart,
-      checked: nextProps._checked,
+      // checkPart: nextProps.checkPart,
+      // checked: nextProps.checked,
+      checkPart: tnState.checkPart,
+      checked: tnState.checked,
     });
   }
   shouldComponentUpdate(nextProps, nextState) {
     const checkbox = this.checkbox.current;
-    if (checkbox) {
+    if (checkbox && this.state.checkPart !== nextState.checkPart) {
       const cls = checkbox.className;
-      const checkSt = Tree.treeNodesState[this.props._pos] || {};
+      const checkSt =
+        rootTrees[this.props._rootTreeId].treeNodesState[this.props._pos] || {};
       checkSt.checkPart = nextState.checkPart;
       checkSt.checked = nextState.checked;
+      const checkPartCls = `${this.props.prefixCls}-checkbox_true_part`;
       if (nextState.checkPart) {
         checkbox.className =
-          cls.indexOf("checkbox_true_part") > -1
-            ? cls
-            : cls + " checkbox_true_part";
+          cls.indexOf(checkPartCls) > -1 ? cls : `${cls} ${checkPartCls}`;
         return false;
-      } else {
-        checkbox.className = cls.replace(/checkbox_true_part/g, "");
       }
+      checkbox.className = cls.replace(new RegExp(checkPartCls, "g"), "");
     }
     return true;
   }
@@ -62,20 +69,32 @@ export default class TreeNode extends Component {
   };
 
   handleSelect = () => {
+    const selected = !this.state.selected;
+    const arr = rootTrees[this.props._rootTreeId].selectedKeys;
+    console.log('this.props._rootTreeId: ', this.props._rootTreeId);
+    console.log('rootTrees: ', rootTrees);
+    const index = arr.indexOf(this.props._key);
+    if (selected) {
+      if (index < 0) {
+        arr.push(this.props._key);
+      }
+    } else {
+      if (index > -1) {
+        arr.splice(index, 1);
+      }
+    }
     this.setState({
-      selected: !this.state.selected,
+      selected: selected,
     });
     if (this.props.onSelect) {
-      this.props.onSelect(!this.state.selected, this);
+      this.props.onSelect(selected, this, arr);
     }
-  };
+  }
 
   handleChecked = () => {
-    const _pos = this.props._pos;
-    console.log(
-      `************** 当前check的节点位置_pos: ${_pos} *************`
-    );
+    const props = this.props;
     let checked = !this.state.checked;
+
     if (this.state.checkPart) {
       checked = false;
     }
@@ -85,49 +104,45 @@ export default class TreeNode extends Component {
       checked: checked,
     };
     this.setState(nSt);
+    this.newTNState(props, checked);
+    rootTrees[props._rootTreeId].treeNodesState[props._pos] = nSt;
+    // console.log(rootTrees[props._rootTreeId].treeNodesState);
+    Tree.handleObj(rootTrees[props._rootTreeId].treeNodesState, !checked, props._pos);
+    // console.log(rootTrees[props._rootTreeId].treeNodesState);
 
-    const sortedTree = Tree.trees.sort(function (a, b) {
-      // 排序保证从最深的有子树的节点开始遍历
+    if (props.onChecked) {
+      props.onChecked(checked, this);
+    }
+  }
+  
+  // set parent treeNodes's state
+  newTNState = (props, checked) => {
+    const _pos = props._pos;
+    rootTrees[this.props._rootTreeId].trees.sort((a, b) => {
       return b.props._pos.length - a.props._pos.length;
-    });
-    // console.log(sortedTree)
-    sortedTree.forEach(function (c) {
+    }).forEach((c) => {
       const cPos = c.props._pos;
-      console.log("--------------排序后的 tree 操作中的 cPos: ", cPos);
+      // console.log('cPos: ', cPos);
       if (_pos.indexOf(cPos) === 0 && _pos !== cPos) {
-        // 父节点才进的来
-        console.log(
-          "--------------该 tree 属于所 check 节点的父节点或者祖先节点, cPos: ",
-          cPos
-        );
-        const childArr = toArray(c.props.children),
-          len = childArr.length;
-
+        const childArr = toArray(c.props.children);
+        const len = childArr.length;
         let checkedNumbers = 0;
-
-        console.log("该 tree children 数组 length: ", len);
-        console.log(`开始计算上一状态下的${cPos}所有子节点的checkedNumbers`);
-        //先计算已经选中的节点数
+        // 先计算已经选中的节点数
+        // console.log(this);
         for (let i = 0; i < len; i++) {
-          const checkSt = Tree.treeNodesState[cPos + "-" + i];
-          console.log("该 tree 子节点", cPos + "-" + i, "的状态: ", checkSt);
+          const checkSt = rootTrees[this.props._rootTreeId].treeNodesState[cPos + '-' + i];
           if (checkSt.checked) {
             checkedNumbers++;
           } else if (checkSt.checkPart) {
             checkedNumbers += 0.5;
           }
         }
-        console.log("该 tree 所有子节点 checkedNumbers", checkedNumbers);
-        //点击节点的 直接父级
+        // 点击节点的 直接父级
         if (_pos.length - cPos.length <= 2) {
-          //如果原来是半选
-          console.log("该 tree 是直接父级，位置：", cPos);
-          console.log("所点击check节点上一个的状态", Tree.treeNodesState[_pos]);
-          console.log(`所点击check节点即将变成的状态checked: ${checked}`);
-          if (Tree.treeNodesState[_pos].checkPart) {
+          // 如果原来是半选
+          if (rootTrees[this.props._rootTreeId].treeNodesState[_pos].checkPart) {
             // checked ? checkedNumbers += 0.5 : checkedNumbers -= 0.5;
             if (checked) {
-              // 这个分支情况不会发生，因为最前面的判断的当前节点 checkPart 是 true 时，checked 无论是什么值就会变成 false
               checkedNumbers += 0.5;
             } else {
               checkedNumbers -= 0.5;
@@ -138,100 +153,156 @@ export default class TreeNode extends Component {
             checkedNumbers--;
           }
         }
-        console.log("最后 该 tree checkedNumbers", checkedNumbers);
+
         let newSt;
         if (checkedNumbers <= 0) {
-          //都不选
+          // 都不选
           newSt = {
             checkPart: false,
             checked: false,
           };
         } else if (checkedNumbers === len) {
-          //全选
+          // 全选
           newSt = {
             checkPart: false,
             checked: true,
           };
         } else {
-          //部分选择
+          // 部分选择
           newSt = {
             checkPart: true,
             checked: false,
           };
         }
         c.setState(newSt);
-        console.log("最后 该 tree 设置的新状态newSt: ", newSt);
-        Tree.treeNodesState[cPos] = newSt;
+        rootTrees[this.props._rootTreeId].treeNodesState[cPos] = newSt;
       }
     });
+  }
 
-    Tree.treeNodesState[_pos] = nSt;
-    console.log(
-      "全部祖先树节点更新完成，所check的节点更新状态到Tree.treeNodesState的 nSt: ",
-      nSt
-    );
-
-    if (this.props.onChecked) {
-      console.log("接下来是来自自定义的 onChecked handle: ");
-      this.props.onChecked(checked, this);
-    }
-  };
+  // keyboard event support
+  handleKeyDown = (e) => {
+    e.preventDefault();
+  }
 
   componentDidUpdate() {
     //console.log( this.state.checked );
     if (this.newChildren) {
-      for (let i = 0; i < Tree.trees.length; i++) {
-        const obj = Tree.trees[i];
-        if (obj.props._pos === this.props._pos) {
-          console.log(`数组第${i}个元素重复,树位置: ${this.props._pos}`);
-          Tree.trees.splice(i--, 1);
-          console.log('删除')
+      const trees = rootTrees[this.props._rootTreeId].trees;
+      for (let i = 0; i < trees.length; i++) {
+        if (trees[i].props._pos === this.props._pos) {
+          // console.log(`数组第${i}个元素重复,树位置: ${this.props._pos}`);
+          trees.splice(i--, 1);
+          // console.log("删除");
         }
       }
-      console.log(
-        `push 进 trees 新的位置为 ${this.props._pos} 的`,
-        this
-      );
-      Tree.trees.push(this);
+      // console.log(`push 进 trees 新的位置为 ${this.props._pos} 的`, this);
+      trees.push(this);
     }
 
     //add treeNodes checked state
-    Tree.treeNodesState[this.props._pos] = {
-      checked: this.state.checked,
-      checkPart: this.state.checkPart,
+    const tnState =
+      rootTrees[this.props._rootTreeId].treeNodesState[this.props._pos] || {};
+    rootTrees[this.props._rootTreeId].treeNodesState[this.props._pos] = {
+      // checked: this.state.checked,
+      // checkPart: this.state.checkPart,
+      checkPart: tnState.checkPart,
+      checked: tnState.checked,
     };
-    console.log(`Tree.treeNodesState[${this.props._pos}]: `, Tree.treeNodesState[this.props._pos]);
+    // console.log(`Tree.treeNodesState[${this.props._pos}]: `, tnState);
   }
 
-  renderChildren(children) {
+  renderSwitcher = (props, prefixCls, switchState) => {
+    const switcherCls = {
+      [`${prefixCls}-button`]: true,
+      [`${prefixCls}-switcher`]: true,
+    };
+    if (props.disabled) {
+      switcherCls[`${prefixCls}-switcher-disabled`] = true;
+      return <span className={classNames(switcherCls)}></span>;
+    }
+
+    if (!props.showLine) {
+      switcherCls[prefixCls + "-noline_" + switchState] = true;
+    } else if (props._isChildTree && props._index === 0) {
+      if (props._len !== 1) {
+        switcherCls[prefixCls + "-center_" + switchState] = true;
+      } else {
+        switcherCls[prefixCls + "-bottom_" + switchState] = true;
+      }
+    } else if (props._index === 0) {
+      switcherCls[prefixCls + "-roots_" + switchState] = true;
+    } else if (props._index === props._len - 1) {
+      switcherCls[prefixCls + "-bottom_" + switchState] = true;
+    } else {
+      switcherCls[prefixCls + "-center_" + switchState] = true;
+    }
+    return (
+      <span
+        className={classNames(switcherCls)}
+        onClick={this.handleExpandedState}
+      ></span>
+    );
+  }
+  renderCheckbox = (props, prefixCls, state) => {
+    const checkboxCls = {
+      [`${prefixCls}-button`]: true,
+      [`${prefixCls}-chk`]: true,
+    };
+    if (!props.checkable) {
+      return null;
+    }
+    if (props.disabled) {
+      checkboxCls[`${prefixCls}-chk-disabled`] = true;
+      return <span ref="checkbox" className={classNames(checkboxCls)}></span>;
+    }
+    if (state.checkPart) {
+      checkboxCls[`${prefixCls}-checkbox_true_part`] = true;
+    } else if (state.checked) {
+      checkboxCls[`${prefixCls}-checkbox_true_full`] = true;
+    } else {
+      checkboxCls[`${prefixCls}-checkbox_false_full`] = true;
+    }
+    if (props.checkbox) {
+      console.log(props.checkbox);
+      // checkbox 上的属性都是只读的
+      // TODO 修改自定义 checkbox 状态
+      // props.checkbox.setState({ checked: state.checked });
+    }
+    return (
+      <span
+        ref="checkbox"
+        className={classNames(checkboxCls)}
+        onClick={this.handleChecked}
+      >
+        {props.checkbox ? props.checkbox : null}
+      </span>
+    );
+  }
+
+  renderChildren = (props, children) => {
     let newChildren = null;
     if (
       children.type === TreeNode ||
       (Array.isArray(children) &&
-        children.every(function (item) {
+        children.every((item) => {
           return item.type === TreeNode;
         }))
     ) {
       const cls = {};
-      cls[this.props.prefixCls + "-child-tree"] = true;
-      if (this.props.showLine && this.props._index !== this.props._len - 1) {
-        cls.line = true;
+      cls[props.prefixCls + "-child-tree"] = true;
+      if (props.showLine && props._index !== props._len - 1) {
+        cls[props.prefixCls + "-line"] = true;
       }
       const treeProps = {
-        _level: this.props._level + 1,
-        _pos: this.props._pos,
-        _isChildTree: true,
+        _rootTreeId: props._rootTreeId,
+        _pos: props._pos,
+        _level: props._level + 1,
+        _childTree: true,
+        checked: this.state.checked,
+        checkPart: this.state.checkPart,
         className: classNames(cls),
-        showLine: this.props.showLine,
-        showIcon: this.props.showIcon,
         expanded: this.state.expanded,
-        expandAll: this.props.expandAll,
-        //selected: this.state.checked,
-        _checked: this.state.checked,
-        _checkPart: this.state.checkPart,
-        checkable: this.props.checkable, //只是为了传递根节点上的checkable设置,是否有更好做法?
-        onChecked: this.props.onChecked,
-        onSelect: this.props.onSelect,
       };
       // newChildren = <Tree {...treeProps}>{children}</Tree>;
       newChildren = this.newChildren = <Tree {...treeProps}>{children}</Tree>;
@@ -244,97 +315,68 @@ export default class TreeNode extends Component {
   render() {
     const props = this.props;
     const state = this.state;
-
     const prefixCls = props.prefixCls;
     const switchState = state.expanded ? "open" : "close";
 
-    const switcherCls = {};
-    switcherCls.button = true;
-    switcherCls[prefixCls + "-treenode-switcher"] = true;
-    switcherCls[prefixCls + "-switcher__" + switchState] = true;
-    if (!props.showLine) {
-      switcherCls["noline_" + switchState] = true;
-    } else if (props._isChildTree && props._index === 0) {
-      if (props._len !== 1) {
-        switcherCls["center_" + switchState] = true;
-      } else {
-        switcherCls["bottom_" + switchState] = true;
-      }
-    } else if (props._index === 0) {
-      switcherCls["roots_" + switchState] = true;
-    } else if (props._index === props._len - 1) {
-      switcherCls["bottom_" + switchState] = true;
-    } else {
-      switcherCls["center_" + switchState] = true;
-    }
-
-    let checkbox = null;
-    const checkboxCls = {};
-    if (props.checkable) {
-      checkboxCls.button = true;
-      checkboxCls.chk = true;
-      /* jshint ignore:start */
-      if (state.checkPart) {
-        checkboxCls.checkbox_true_part = true;
-      } else if (state.checked) {
-        checkboxCls.checkbox_true_full = true;
-      } else {
-        checkboxCls.checkbox_false_full = true;
-      }
-      /* jshint ignore:end */
-      checkbox = (
-        <span
-          ref={this.checkbox}
-          className={classNames(checkboxCls)}
-          onClick={this.handleChecked}
-        ></span>
-      );
-    }
-
     const iconEleCls = {
-      button: true,
-      [prefixCls + "-iconEle"]: true,
-      [prefixCls + "-icon__" + switchState]: true,
+      [`${prefixCls}-button`]: true,
+      [`${prefixCls}-iconEle`]: true,
+      [`${prefixCls}-icon__${switchState}`]: true,
     };
 
     let content = props.title;
-    let newChildren = this.renderChildren(props.children);
+    let newChildren = this.renderChildren(props, props.children);
     if (newChildren === props.children) {
       // 如果 children 不全部是 TreeNode，那 this.props.children 就会直接渲染成 content
       content = newChildren;
       newChildren = null;
     }
 
+    const selectHandle = () => {
+      const icon = props.showIcon ? (
+        <span className={classNames(iconEleCls)}></span>
+      ) : null;
+      if (props.disabled) {
+        return (
+          <a ref="selectHandle" title={content}>
+            {icon}
+            <span className="title">{content}</span>
+          </a>
+        );
+      }
+
+      return (
+        <a
+          ref="selectHandle"
+          title={content}
+          className={state.selected ? `${prefixCls}-selected` : ""}
+          onClick={this.handleSelect}
+        >
+          {icon}
+          <span className="title">{content}</span>
+        </a>
+      );
+    };
+
     return (
       <li
         className={joinClasses(
           props.className,
-          "level" + props._level,
-          "pos-" + props._pos
+          `level-${props._level}`,
+          `pos-${props._pos}`,
+          props.disabled ? `${prefixCls}-treenode-disabled` : ""
         )}
       >
-        <span
-          className={classNames(switcherCls)}
-          onClick={this.handleExpandedState}
-        ></span>
-        {checkbox}
-        <a
-          ref={this.selectHandle}
-          title={content}
-          className={state.selected ? prefixCls + "-selected" : ""}
-          onClick={this.handleSelect}
-        >
-          {props.showIcon ? (
-            <span className={classNames(iconEleCls)}></span>
-          ) : null}
-          <span className="title">{content}</span>
-        </a>
+        {this.renderSwitcher(props, prefixCls, switchState)}
+        {this.renderCheckbox(props, prefixCls, state)}
+        {selectHandle()}
         {newChildren}
       </li>
     );
   }
 }
 TreeNode.defaultProps = {
+  _childTreeNode: true,
   title: "---",
   defaultExpanded: false,
   expanded: false,
