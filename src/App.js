@@ -3,9 +3,9 @@ import Tree, { TreeNode } from "./components/Tree";
 // import "./components/Tree/index.less";
 import "./App.less";
 
-function handleSelect(selected, c, selectedKeys) {
-  console.log("from App select handle: ", selected, c, selectedKeys);
-}
+// function handleSelect(selected, c, selectedKeys) {
+//   console.log("from App select handle: ", selected, c, selectedKeys);
+// }
 function handleChecked(checked, c) {
   console.log("from App check handle: ", checked, c);
 }
@@ -15,9 +15,17 @@ export default function App() {
     <div className="App">
       <div>
         <h2>simple</h2>
-        <Tree onSelect={handleSelect} expandAll={true} showIcon={false}>
+        <Tree
+          className="myCls"
+          defaultExpandAll={true}
+          showIcon={false}
+          showLine={true}
+        >
           <TreeNode title="parent 1">
-            <TreeNode>leaf </TreeNode>
+            <TreeNode title="parent 1-0">
+              <TreeNode>leaf </TreeNode>
+              <TreeNode>leaf </TreeNode>
+            </TreeNode>
             <TreeNode title="parent 1-1">
               <TreeNode>leaf </TreeNode>
               <TreeNode>leaf </TreeNode>
@@ -28,44 +36,45 @@ export default function App() {
 
       <div>
         <h2>expanded</h2>
-        <Tree className="myCls">
-          <TreeNode title="parent 1" expanded={true}>
-            <TreeNode>leaf </TreeNode>
-            <TreeNode title="parent 1-1" defaultExpanded={true}>
-              <TreeNode>leaf </TreeNode>
-              <TreeNode>
-                <TreeNode>leaf </TreeNode>
-                <TreeNode>leaf </TreeNode>
-              </TreeNode>
-            </TreeNode>
-            <TreeNode title="parent 1-2" defaultExpanded={false}>
-              <TreeNode>leaf </TreeNode>
-              <TreeNode>leaf </TreeNode>
-            </TreeNode>
-          </TreeNode>
-        </Tree>
-      </div>
-
-      <div>
-        <h2>select</h2>
-        <Tree
-          expandAll={true}
-          onSelect={handleSelect}
-          defaultSelectedKeys={["p1", "p22"]}
-        >
+        <Tree defaultExpandedKeys={["p1", "p11"]}>
           <TreeNode title="parent 1" key="p1">
             <TreeNode key="p10">leaf </TreeNode>
-            <TreeNode title="parent 1-1" key="p11" disabled>
+            <TreeNode title="parent 1-1" key="p11">
               <TreeNode title="parent 2-1" key="p21">
                 <TreeNode>leaf </TreeNode>
                 <TreeNode>leaf </TreeNode>
               </TreeNode>
               <TreeNode key="p22">leaf</TreeNode>
-              <TreeNode>leaf </TreeNode>
             </TreeNode>
           </TreeNode>
-          <TreeNode>leaf </TreeNode>
+          <TreeNode key="p12">leaf</TreeNode>
+        </Tree>
+      </div>
+
+      <div>
+        <h2>checked</h2>
+        <Tree
+          defaultExpandAll={true}
+          checkable={true}
+          onCheck={handleChecked}
+          defaultCheckedKeys={["p1", "p22"]}
+        >
+          <TreeNode title="parent 1" key="p1">
+            <TreeNode key="p10">leaf </TreeNode>
+            <TreeNode title="parent 1-1" key="p11">
+              <TreeNode title="parent 2-1" key="p21">
+                <TreeNode>leaf </TreeNode>
+                <TreeNode>leaf </TreeNode>
+              </TreeNode>
+              <TreeNode key="p22">leaf</TreeNode>
+            </TreeNode>
+          </TreeNode>
+          <TreeNode key="p12">leaf</TreeNode>
           <TreeNode>
+            <TreeNode>
+              <TreeNode>leaf </TreeNode>
+              <TreeNode>leaf </TreeNode>
+            </TreeNode>
             <TreeNode>leaf </TreeNode>
           </TreeNode>
         </Tree>
@@ -73,7 +82,12 @@ export default function App() {
 
       <div>
         <h2>checkbox</h2>
-        <Tree expandAll={true} checkable={true} onChecked={handleChecked}>
+        <Tree
+          defaultExpandAll={true}
+          checkable={true}
+          showLine={true}
+          onChecked={handleChecked}
+        >
           <TreeNode title="parent 1">
             <TreeNode title="child1" defaultChecked={true}>
               <TreeNode>child11 </TreeNode>
@@ -89,28 +103,34 @@ export default function App() {
             </TreeNode>
           </TreeNode>
           <TreeNode title="parent 2">
-            <TreeNode checked={true}>child2 </TreeNode>
+            <TreeNode>child2 </TreeNode>
           </TreeNode>
         </Tree>
       </div>
 
       <div>
         <h2>custom checkbox</h2>
-        <Tree expandAll={true} checkable={true} onChecked={handleChecked}>
+        <Tree
+          defaultExpandAll={true}
+          checkable={true}
+          onChecked={handleChecked}
+        >
           <TreeNode
             title="parent 1"
-            checkbox={<input type="checkbox" defaultChecked={false} />}
+            checkbox={<input type="checkbox" checked={true} />}
           >
             <TreeNode>child1 </TreeNode>
             <TreeNode
               title="parent 1-1"
-              checkbox={<input type="checkbox" defaultChecked={false} />}
+              checkbox={<input type="checkbox" checked={true} />}
             >
               <TreeNode>leaf </TreeNode>
               <TreeNode>leaf </TreeNode>
             </TreeNode>
           </TreeNode>
-          <TreeNode>leaf </TreeNode>
+          <TreeNode>
+            <TreeNode>leaf </TreeNode>
+          </TreeNode>
         </Tree>
       </div>
     </div>
